@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ScrapeProfileRequest;
+use App\Http\Resources\ProfileResource;
 use App\Jobs\ScrapeProfileJob;
 use App\Models\Profile;
 use Illuminate\Http\JsonResponse;
@@ -15,21 +17,9 @@ class ProfileController extends Controller
     /**
      * Queue a profile for scraping.
      */
-    public function scrape(Request $request): JsonResponse
+    public function scrape(ScrapeProfileRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'username' => 'required|string|regex:/^[a-zA-Z0-9_-]+$/|max:50',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid username provided',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $username = $request->input('username');
+        $username = $request->validated()['username'];
 
         try {
             // Check if profile already exists
@@ -90,24 +80,6 @@ class ProfileController extends Controller
                 ->take($limit)
                 ->get();
 
-            // Transform the results
-            $results = $profiles->map(function ($profile) {
-                return [
-                    'id' => $profile->id,
-                    'username' => $profile->username,
-                    'name' => $profile->name,
-                    'bio' => $profile->bio,
-                    'avatar_url' => $profile->avatar_url,
-                    'likes_count' => $profile->likes_count,
-                    'followers_count' => $profile->followers_count,
-                    'is_verified' => $profile->is_verified,
-                    'is_online' => $profile->is_online,
-                    'location' => $profile->location,
-                    'last_scraped_at' => $profile->last_scraped_at?->toISOString(),
-                    'created_at' => $profile->created_at->toISOString(),
-                ];
-            });
-
             return response()->json([
                 'success' => true,
                 'message' => "Found {$profiles->count()} profiles matching '{$query}'",
@@ -115,7 +87,7 @@ class ProfileController extends Controller
                     'query' => $query,
                     'total' => $profiles->count(),
                     'limit' => $limit,
-                    'profiles' => $results,
+                    'profiles' => ProfileResource::collection($profiles),
                 ],
             ]);
 
@@ -160,29 +132,11 @@ class ProfileController extends Controller
             $profiles = Profile::orderBy($sort, $order)
                 ->paginate($limit);
 
-            $results = $profiles->getCollection()->map(function ($profile) {
-                return [
-                    'id' => $profile->id,
-                    'username' => $profile->username,
-                    'name' => $profile->name,
-                    'bio' => $profile->bio,
-                    'avatar_url' => $profile->avatar_url,
-                    'likes_count' => $profile->likes_count,
-                    'followers_count' => $profile->followers_count,
-                    'posts_count' => $profile->posts_count,
-                    'is_verified' => $profile->is_verified,
-                    'is_online' => $profile->is_online,
-                    'location' => $profile->location,
-                    'last_scraped_at' => $profile->last_scraped_at?->toISOString(),
-                    'created_at' => $profile->created_at->toISOString(),
-                ];
-            });
-
             return response()->json([
                 'success' => true,
                 'message' => "Retrieved {$profiles->count()} profiles",
                 'data' => [
-                    'profiles' => $results,
+                    'profiles' => ProfileResource::collection($profiles),
                     'pagination' => [
                         'current_page' => $profiles->currentPage(),
                         'last_page' => $profiles->lastPage(),

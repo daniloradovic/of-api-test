@@ -19,14 +19,17 @@ Route::middleware('api')->group(function () {
     // Profile management routes
     Route::prefix('profiles')->group(function () {
         Route::post('scrape', [ProfileController::class, 'scrape'])
+            ->middleware('rate_limit:scrape')
             ->name('profiles.scrape');
         
         Route::get('/', [ProfileController::class, 'index'])
+            ->middleware('rate_limit:general')
             ->name('profiles.index');
     });
 
     // Search routes
     Route::get('search', [ProfileController::class, 'search'])
+        ->middleware('rate_limit:search')
         ->name('profiles.search');
 
     // Health check route

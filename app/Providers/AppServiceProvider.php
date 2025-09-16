@@ -13,6 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Bind scraper interface
         $this->app->bind(ProfileScraperInterface::class, FakeProfileScraper::class);
     }
 

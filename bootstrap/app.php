@@ -13,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Register API rate limiting middleware
+        $middleware->alias([
+            'rate_limit' => \App\Http\Middleware\RateLimitApiRequests::class,
+        ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
         // Run profile scraping every hour
