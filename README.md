@@ -1,0 +1,144 @@
+# OnlyFans Profile Scraper API
+
+A Laravel 12-based API for scraping and searching OnlyFans profiles using queues, scheduling, and full-text search.
+
+## Features
+
+- **Profile Scraping**: Queue-based profile scraping with fake data generation
+- **Scheduled Updates**: Automatic scraping based on profile popularity (>100k likes = 24h, others = 72h)
+- **Full-Text Search**: Laravel Scout integration with database driver for searching profiles
+- **Queue Management**: Laravel Horizon for monitoring and managing scraping jobs
+- **Modular Architecture**: Clean separation with interfaces, services, and jobs
+
+## Quick Start
+
+### Prerequisites
+- PHP 8.2+
+- Redis
+- Composer
+
+### Installation
+
+```bash
+# Install dependencies
+composer install
+
+# Configure environment
+cp .env.example .env
+# Update QUEUE_CONNECTION=redis and SCOUT_DRIVER=database in .env
+
+# Generate key and run migrations
+php artisan key:generate
+php artisan migrate
+
+# Import search indexes
+php artisan scout:import "App\Models\Profile"
+```
+
+### Running the Application
+
+```bash
+# Terminal 1: Start Laravel
+php artisan serve
+
+# Terminal 2: Start Horizon (queue processing)
+php artisan horizon
+
+# Terminal 3: Start Redis
+redis-server
+
+# Optional Terminal 4: Start scheduler
+php artisan schedule:work
+```
+
+## API Endpoints
+
+### Queue Profile Scraping
+```bash
+POST /api/profiles/scrape
+Content-Type: application/json
+
+{
+  "username": "example_user"
+}
+```
+
+### Search Profiles
+```bash
+GET /api/search?q=verified&limit=10
+```
+
+### List All Profiles
+```bash
+GET /api/profiles?sort=likes_count&order=desc&limit=20
+```
+
+### Health Check
+```bash
+GET /api/health
+```
+
+## Key Components
+
+### Database Tables
+- `profiles`: Main profile data with Scout search integration
+- `profile_scrapes`: Scraping history and status tracking
+
+### Services
+- `ProfileScraperInterface`: Scraper contract
+- `FakeProfileScraper`: Mock implementation generating realistic fake data
+
+### Jobs & Commands
+- `ScrapeProfileJob`: Queue job for profile scraping
+- `ScrapeProfilesCommand`: Scheduled command (`profiles:scrape`)
+
+### Configuration
+- **Horizon**: Dedicated `scraping` queue supervisor
+- **Scheduler**: Runs every hour, queues profiles needing updates
+- **Scout**: Database driver for full-text search
+
+## Architecture
+
+```
+app/
+├── Console/Commands/ScrapeProfilesCommand.php
+├── Http/Controllers/Api/ProfileController.php
+├── Jobs/ScrapeProfileJob.php
+├── Models/Profile.php (Scout integration)
+├── Models/ProfileScrape.php
+└── Services/Scraper/
+    ├── ProfileScraperInterface.php
+    └── FakeProfileScraper.php
+```
+
+## Scraping Logic
+
+- **High Priority** (>100k likes): Scraped every 24 hours
+- **Regular Priority** (≤100k likes): Scraped every 72 hours
+- **Fake Data**: Generates realistic profiles with names, bios, stats, locations
+- **Error Handling**: 3 retry attempts, comprehensive logging
+
+## Monitoring
+
+- **Horizon Dashboard**: `/horizon` - Monitor jobs, queues, metrics
+- **Logs**: `storage/logs/laravel.log` - Scraping events and errors
+- **Health Check**: `/api/health` - API status verification
+
+## Manual Commands
+
+```bash
+# Queue profiles for scraping
+php artisan profiles:scrape --limit=50
+
+# Horizon management
+php artisan horizon
+php artisan horizon:pause
+
+# Scout re-indexing
+php artisan scout:flush "App\Models\Profile"
+php artisan scout:import "App\Models\Profile"
+```
+
+## License
+
+MIT License
