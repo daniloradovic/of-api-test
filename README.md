@@ -31,6 +31,9 @@ cp .env.example .env
 php artisan key:generate
 php artisan migrate
 
+# Seed with sample data (optional - 10 realistic profiles)
+php artisan db:seed
+
 # Import search indexes
 php artisan scout:import "App\Models\Profile"
 ```
@@ -123,6 +126,30 @@ app/
 - **Horizon Dashboard**: `/horizon` - Monitor jobs, queues, metrics
 - **Logs**: `storage/logs/laravel.log` - Scraping events and errors
 - **Health Check**: `/api/health` - API status verification
+
+## Testing & Quality Assurance
+
+### Run Test Suite
+```bash
+# Run all tests (Feature + Unit tests)
+php artisan test
+
+# Run specific test suites
+php artisan test --filter=ProfileApiTest     # API endpoint tests
+php artisan test --filter=ProfileScraperTest # Scraper service tests
+php artisan test --filter=ScrapeProfileJobTest # Queue job tests
+```
+
+### Sample Data
+```bash
+# Reset and seed with fresh sample data
+php artisan migrate:fresh --seed
+
+# Seed only (keeps existing data)
+php artisan db:seed
+```
+
+**Sample profiles include**: High-likes influencers, verified accounts, various locations, and different scraping schedules for immediate testing.
 
 ## Manual Commands
 
