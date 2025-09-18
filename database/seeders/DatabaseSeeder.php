@@ -19,5 +19,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Seed realistic profile data for testing
+        $this->call(ProfileSeeder::class);
     }
 }
