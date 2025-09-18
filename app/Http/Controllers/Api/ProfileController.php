@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ScrapeProfileRequest;
+use App\Http\Requests\SearchProfilesRequest;
+use App\Http\Requests\IndexProfilesRequest;
 use App\Http\Resources\ProfileResource;
 use App\Jobs\ScrapeProfileJob;
 use App\Models\Profile;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
@@ -56,23 +56,11 @@ class ProfileController extends Controller
     /**
      * Search profiles using Scout.
      */
-    public function search(Request $request): JsonResponse
+    public function search(SearchProfilesRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'q' => 'required|string|min:2|max:100',
-            'limit' => 'sometimes|integer|min:1|max:100',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid search parameters',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $query = $request->input('q');
-        $limit = $request->input('limit', 20);
+        $validated = $request->validated();
+        $query = $validated['q'];
+        $limit = $validated['limit'];
 
         try {
             // Search using Scout
@@ -107,26 +95,12 @@ class ProfileController extends Controller
     /**
      * Get all profiles with pagination.
      */
-    public function index(Request $request): JsonResponse
+    public function index(IndexProfilesRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'page' => 'sometimes|integer|min:1',
-            'limit' => 'sometimes|integer|min:1|max:100',
-            'sort' => 'sometimes|string|in:username,name,likes_count,followers_count,last_scraped_at,created_at',
-            'order' => 'sometimes|string|in:asc,desc',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid parameters',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $limit = $request->input('limit', 20);
-        $sort = $request->input('sort', 'created_at');
-        $order = $request->input('order', 'desc');
+        $data = $request->getValidatedData();
+        $limit = $data['limit'];
+        $sort = $data['sort'];
+        $order = $data['order'];
 
         try {
             $profiles = Profile::orderBy($sort, $order)

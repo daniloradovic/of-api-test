@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Laravel\Scout\Searchable;
 
 class Profile extends Model
@@ -77,7 +78,7 @@ class Profile extends Model
     /**
      * Get the latest scrape for the profile.
      */
-    public function latestScrape(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function latestScrape(): HasOne
     {
         return $this->hasOne(ProfileScrape::class)->latestOfMany();
     }
