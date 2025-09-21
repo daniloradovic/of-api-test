@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'onlyfans_api' => [
+        'key' => env('ONLYFANS_API_KEY'),
+    ],
+
 ];

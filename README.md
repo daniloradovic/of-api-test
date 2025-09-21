@@ -4,7 +4,8 @@ A Laravel 12-based API for scraping and searching OnlyFans profiles using queues
 
 ## Features
 
-- **Profile Scraping**: Queue-based profile scraping with fake data generation
+- **Real Profile Scraping**: Integration with OnlyFansAPI.com for live profile data
+- **Fallback Mock Data**: Automatic fallback to fake data when API key not configured
 - **Scheduled Updates**: Automatic scraping based on profile popularity (>100k likes = 24h, others = 72h)
 - **Full-Text Search**: Laravel Scout integration with database driver for searching profiles
 - **Queue Management**: Laravel Horizon for monitoring and managing scraping jobs
@@ -25,7 +26,7 @@ composer install
 
 # Configure environment
 cp .env.example .env
-# Update QUEUE_CONNECTION=redis and SCOUT_DRIVER=database in .env
+# Update QUEUE_CONNECTION=redis, SCOUT_DRIVER=database, and ONLYFANS_API_KEY in .env
 
 # Generate key and run migrations
 php artisan key:generate
@@ -89,11 +90,16 @@ GET /api/health
 
 ### Services
 - `ProfileScraperInterface`: Scraper contract
-- `FakeProfileScraper`: Mock implementation generating realistic fake data
+- `OnlyFansApiScraper`: Real implementation using OnlyFansAPI.com
+- `FakeProfileScraper`: Fallback mock implementation for testing
 
 ### Jobs & Commands
 - `ScrapeProfileJob`: Queue job for profile scraping
 - `ScrapeProfilesCommand`: Scheduled command (`profiles:scrape`)
+
+### Configuration
+- **Real Scraping**: Set `ONLYFANS_API_KEY` to use OnlyFansAPI.com
+- **Mock Data**: Leave `ONLYFANS_API_KEY` empty for fake data generation
 
 ### Configuration
 - **Horizon**: Dedicated `scraping` queue supervisor
