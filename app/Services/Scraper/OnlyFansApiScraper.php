@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class OnlyFansApiScraper implements ProfileScraperInterface
 {
-    protected string $baseUrl = 'https://onlyfansapi.com/api/v1';
+    protected string $baseUrl = 'https://app.onlyfansapi.com/api';
     protected string $apiKey;
 
     public function __construct()
@@ -20,11 +20,11 @@ class OnlyFansApiScraper implements ProfileScraperInterface
         Log::info("Real scraping profile: {$username}");
 
         try {
-            // Using OnlyFansAPI.com to get public profile data
+            // Using OnlyFansAPI.com to get public profile data (following official docs)
             $response = Http::timeout(30)
                 ->withHeaders([
+                    'Content-Type' => 'application/json',
                     'Authorization' => 'Bearer ' . $this->apiKey,
-                    'Accept' => 'application/json',
                 ])
                 ->get("{$this->baseUrl}/profiles/{$username}");
 
@@ -51,12 +51,16 @@ class OnlyFansApiScraper implements ProfileScraperInterface
         }
 
         try {
-            // Quick health check to OnlyFans API
+            // Quick test request to check API availability
             $response = Http::timeout(10)
-                ->withHeaders(['Authorization' => 'Bearer ' . $this->apiKey])
-                ->get("{$this->baseUrl}/health");
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $this->apiKey,
+                ])
+                ->get("{$this->baseUrl}/profiles/test");
 
-            return $response->successful();
+            // API is available if we get any response (even 404 is fine)
+            return $response->status() !== 401 && $response->status() !== 403;
         } catch (\Exception $e) {
             Log::error('OnlyFans API health check failed', ['error' => $e->getMessage()]);
             return false;
